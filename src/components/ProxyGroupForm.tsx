@@ -1,94 +1,36 @@
-import React from 'react';
-import { Form, Input, Select, Button, Collapse } from 'antd';
-import type { ProxyGroup } from '../types/proxyGroup';
+import React, { useEffect } from 'react';
+import { Form, Input, Select, Button, message } from 'antd';
 import useProxyGroupStore from '../stores/proxyGroupStore';
-
-export type { ProxyGroupFormProps };
-
-const { Option } = Select;
-const { Panel } = Collapse;
+import type { ProxyGroup } from '../types/proxyGroup';
 
 interface ProxyGroupFormProps {
-  initialValues?: ProxyGroup;
+  initialValues: ProxyGroup | null;
   onSuccess?: () => void;
 }
 
 const ProxyGroupForm: React.FC<ProxyGroupFormProps> = ({ initialValues, onSuccess }) => {
   const [form] = Form.useForm();
-  const addGroup = useProxyGroupStore((state) => state.addGroup);
-  const updateGroup = useProxyGroupStore((state) => state.updateGroup);
+  const { addGroup, updateGroup } = useProxyGroupStore();
 
-  const handleSubmit = (values: any) => {
+  useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
+    }
+  }, [initialValues, form]);
+
+  const onFinish = async (values: ProxyGroup) => {
     try {
       if (initialValues) {
-        updateGroup(initialValues.id, values);
+        await updateGroup(initialValues.id, values);
+        message.success('代理组更新成功');
       } else {
-        addGroup({ ...values, id: Date.now().toString() });
+        await addGroup({ ...values, id: Date.now().toString() });
+        message.success('代理组添加成功');
       }
-      form.resetFields();
       onSuccess?.();
     } catch (error) {
+      message.error('操作失败');
       console.error(error);
-    }
-  };
-
-  const renderAdditionalFields = (type: string) => {
-    switch (type) {
-      case 'url-test':
-        return (
-          <>
-            <Form.Item
-              label="测试URL"
-              name="url"
-              rules={[{ required: true, message: '请输入测试URL' }]}
-            >
-              <Input placeholder="测试URL" />
-            </Form.Item>
-            <Form.Item
-              label="测试间隔"
-              name="interval"
-              rules={[{ required: true, message: '请输入测试间隔' }]}
-            >
-              <Input type="number" placeholder="测试间隔（秒）" />
-            </Form.Item>
-          </>
-        );
-      case 'fallback':
-        return (
-          <>
-            <Form.Item
-              label="测试URL"
-              name="url"
-              rules={[{ required: true, message: '请输入测试URL' }]}
-            >
-              <Input placeholder="测试URL" />
-            </Form.Item>
-            <Form.Item
-              label="测试间隔"
-              name="interval"
-              rules={[{ required: true, message: '请输入测试间隔' }]}
-            >
-              <Input type="number" placeholder="测试间隔（秒）" />
-            </Form.Item>
-          </>
-        );
-      case 'load-balance':
-        return (
-          <>
-            <Form.Item
-              label="策略"
-              name="strategy"
-              rules={[{ required: true, message: '请选择策略' }]}
-            >
-              <Select placeholder="选择策略">
-                <Option value="round-robin">轮询</Option>
-                <Option value="random">随机</Option>
-              </Select>
-            </Form.Item>
-          </>
-        );
-      default:
-        return null;
     }
   };
 
@@ -96,37 +38,43 @@ const ProxyGroupForm: React.FC<ProxyGroupFormProps> = ({ initialValues, onSucces
     <Form
       form={form}
       layout="vertical"
-      initialValues={initialValues}
-      onFinish={handleSubmit}
+      initialValues={initialValues || undefined}
+      onFinish={onFinish}
     >
       <Form.Item
         label="名称"
         name="name"
-        rules={[{ required: true, message: '请输入名称' }]}
+        rules={[{ required: true, message: '请输入代理组名称' }]}
       >
-        <Input placeholder="名称" />
+        <Input />
       </Form.Item>
 
       <Form.Item
         label="类型"
         name="type"
-        rules={[{ required: true, message: '请选择类型' }]}
+        rules={[{ required: true, message: '请选择代理组类型' }]}
       >
-        <Select onChange={() => form.resetFields(['url', 'interval', 'strategy'])}>
-          <Option value="select">Select</Option>
-          <Option value="url-test">URL-Test</Option>
-          <Option value="fallback">Fallback</Option>
-          <Option value="load-balance">Load-Balance</Option>
+        <Select>
+          <Select.Option value="select">Select</Select.Option>
+          <Select.Option value="url-test">URL-Test</Select.Option>
+          <Select.Option value="fallback">Fallback</Select.Option>
+          <Select.Option value="load-balance">Load-Balance</Select.Option>
         </Select>
       </Form.Item>
 
-      <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}>
-        {() => renderAdditionalFields(form.getFieldValue('type'))}
+      <Form.Item
+        label="代理列表"
+        name="proxies"
+        rules={[{ required: true, message: '请选择至少一个代理' }]}
+      >
+        <Select mode="multiple">
+          {/* 这里需要从代理服务器列表中获取选项 */}
+        </Select>
       </Form.Item>
 
       <Form.Item>
         <Button type="primary" htmlType="submit">
-          {initialValues ? '更新' : '创建'}
+          {initialValues ? '更新' : '添加'}
         </Button>
       </Form.Item>
     </Form>

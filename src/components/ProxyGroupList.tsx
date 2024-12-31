@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
-import { Table, Button, Space, Popconfirm, message } from 'antd';
+import React, { useRef, useState } from 'react';
+import { Table, Button, Space, Popconfirm, message, Modal } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useDrag, useDrop } from 'react-dnd/dist/hooks';
 import useProxyGroupStore from '../stores/proxyGroupStore';
 import type { ProxyGroup } from '../types/proxyGroup';
+import ProxyGroupForm from './ProxyGroupForm';
 
 interface ProxyGroupListProps {
   onAddClick?: () => void;
@@ -17,9 +18,12 @@ interface DraggableRowProps {
 }
 
 const DraggableRow: React.FC<DraggableRowProps> = ({ index, record, moveRow, ...props }) => {
-  const [, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: 'ProxyGroup',
     item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
   });
 
   const [, drop] = useDrop({
@@ -40,15 +44,36 @@ const DraggableRow: React.FC<DraggableRowProps> = ({ index, record, moveRow, ...
   const ref = useRef<HTMLTableRowElement>(null);
   drag(drop(ref));
 
+  const opacity = isDragging ? 0 : 1;
+  const backgroundColor = isDragging ? '#fafafa' : 'transparent';
+
   return (
     <tr
       ref={ref}
+      style={{ opacity, backgroundColor, transition: 'all 0.2s ease' }}
       {...props}
     />
   );
 };
 
-const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick }) => {
+const ProxyGroupList: React.FC<ProxyGroupListProps> = () => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<ProxyGroup | null>(null);
+
+  const showModal = (group?: ProxyGroup) => {
+    setEditingGroup(group || null);
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setEditingGroup(null);
+  };
+
+  const handleSuccess = () => {
+    setIsModalVisible(false);
+    setEditingGroup(null);
+  };
   const { groups, removeGroup, reorderGroups } = useProxyGroupStore();
 
   const handleDelete = (id: string) => {
@@ -87,7 +112,7 @@ const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick
       key: 'action',
       render: (_: any, record: ProxyGroup) => (
         <Space size="middle">
-          <Button type="link" onClick={() => onEditClick?.(record)}>
+          <Button type="link" onClick={() => showModal(record)}>
             编辑
           </Button>
           <Popconfirm
@@ -108,7 +133,7 @@ const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick
   return (
     <>
       <div style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={onAddClick}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
           添加代理组
         </Button>
       </div>
@@ -130,6 +155,17 @@ const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick
           },
         }}
       />
+      <Modal
+        title={editingGroup ? '编辑代理组' : '添加代理组'}
+        open={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        <ProxyGroupForm
+          initialValues={editingGroup}
+          onSuccess={handleSuccess}
+        />
+      </Modal>
     </>
   );
 };
