@@ -128,6 +128,38 @@ const ProxyGroupForm: React.FC<ProxyGroupFormProps> = ({ initialValues, onSucces
         <Input.Password />
       </Form.Item>
 
+      {['url-test', 'fallback'].includes(form.getFieldValue('type')) && (
+        <>
+          <Form.Item
+            label="测试URL"
+            name="url"
+            rules={[
+              { required: true, message: '请输入测试URL' },
+              {
+                pattern: /^https?:\/\/.+/,
+                message: '请输入有效的URL，必须以http://或https://开头'
+              }
+            ]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="测试间隔（秒）"
+            name="interval"
+            rules={[
+              { required: true, message: '请输入测试间隔' },
+              {
+                pattern: /^[1-9]\d*$/,
+                message: '测试间隔必须为正整数'
+              }
+            ]}
+          >
+            <Input type="number" />
+          </Form.Item>
+        </>
+      )}
+
       <Form.Item>
         <Button type="primary" htmlType="submit">
           {initialValues ? '更新' : '添加'}

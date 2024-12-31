@@ -108,6 +108,28 @@ const ProxyGroupList: React.FC<ProxyGroupListProps> = () => {
       render: (proxies: string[]) => proxies.length,
     },
     {
+      title: '测试URL',
+      dataIndex: 'url',
+      key: 'url',
+      render: (url: string, record: ProxyGroup) => {
+        if (['url-test', 'fallback'].includes(record.type)) {
+          return url || '未设置';
+        }
+        return 'N/A';
+      },
+    },
+    {
+      title: '测试间隔',
+      dataIndex: 'interval',
+      key: 'interval',
+      render: (interval: number, record: ProxyGroup) => {
+        if (['url-test', 'fallback'].includes(record.type)) {
+          return interval ? `${interval}秒` : '未设置';
+        }
+        return 'N/A';
+      },
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_: any, record: ProxyGroup) => (
