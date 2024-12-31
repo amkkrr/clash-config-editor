@@ -6,6 +6,7 @@ interface ProxyGroupStore {
   addGroup: (group: ProxyGroup) => void;
   updateGroup: (id: string, group: Partial<ProxyGroup>) => void;
   removeGroup: (id: string) => void;
+  reorderGroups: (dragIndex: number, hoverIndex: number) => void;
 }
 
 const useProxyGroupStore = create<ProxyGroupStore>((set) => ({
@@ -17,6 +18,13 @@ const useProxyGroupStore = create<ProxyGroupStore>((set) => ({
     })),
   removeGroup: (id) =>
     set((state) => ({ groups: state.groups.filter((g) => g.id !== id) })),
+  reorderGroups: (dragIndex, hoverIndex) =>
+    set((state) => {
+      const newGroups = [...state.groups];
+      const [removed] = newGroups.splice(dragIndex, 1);
+      newGroups.splice(hoverIndex, 0, removed);
+      return { groups: newGroups };
+    }),
 }));
 
 export default useProxyGroupStore;

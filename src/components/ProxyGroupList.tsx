@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Table, Button, Space, Popconfirm, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { useDrag, useDrop } from 'react-dnd/dist/hooks';
 import useProxyGroupStore from '../stores/proxyGroupStore';
 import type { ProxyGroup } from '../types/proxyGroup';
 
@@ -9,8 +10,46 @@ interface ProxyGroupListProps {
   onEditClick?: (group: ProxyGroup) => void;
 }
 
+interface DraggableRowProps {
+  index: number;
+  record: ProxyGroup;
+  moveRow: (dragIndex: number, hoverIndex: number) => void;
+}
+
+const DraggableRow: React.FC<DraggableRowProps> = ({ index, record, moveRow, ...props }) => {
+  const [, drag] = useDrag({
+    type: 'ProxyGroup',
+    item: { index },
+  });
+
+  const [, drop] = useDrop({
+    accept: 'ProxyGroup',
+    hover: (item: { index: number }) => {
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      moveRow(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  const ref = useRef<HTMLTableRowElement>(null);
+  drag(drop(ref));
+
+  return (
+    <tr
+      ref={ref}
+      {...props}
+    />
+  );
+};
+
 const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick }) => {
-  const { groups, removeGroup } = useProxyGroupStore();
+  const { groups, removeGroup, reorderGroups } = useProxyGroupStore();
 
   const handleDelete = (id: string) => {
     try {
@@ -20,6 +59,10 @@ const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick
       message.error('删除代理组失败');
       console.error(error);
     }
+  };
+
+  const moveRow = (dragIndex: number, hoverIndex: number) => {
+    reorderGroups(dragIndex, hoverIndex);
   };
 
   const columns = [
@@ -74,6 +117,18 @@ const ProxyGroupList: React.FC<ProxyGroupListProps> = ({ onAddClick, onEditClick
         columns={columns}
         rowKey="id"
         pagination={false}
+        components={{
+          body: {
+            row: (props: any) => (
+              <DraggableRow
+                index={props['data-row-key']}
+                record={props.record}
+                moveRow={moveRow}
+                {...props}
+              />
+            ),
+          },
+        }}
       />
     </>
   );
