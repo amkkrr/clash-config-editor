@@ -72,6 +72,62 @@ const ProxyGroupForm: React.FC<ProxyGroupFormProps> = ({ initialValues, onSucces
         </Select>
       </Form.Item>
 
+      <Form.Item
+        label="服务器地址"
+        name="server"
+        rules={[
+          { required: true, message: '请输入服务器地址' },
+          {
+            pattern: /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/,
+            message: '请输入有效的服务器地址'
+          }
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        label="端口号"
+        name="port"
+        rules={[
+          { required: true, message: '请输入端口号' },
+          {
+            pattern: /^([1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$/,
+            message: '端口号必须在 1-65535 之间'
+          }
+        ]}
+      >
+        <Input type="number" />
+      </Form.Item>
+
+      <Form.Item
+        label="UUID"
+        name="uuid"
+        rules={[
+          { required: true, message: '请输入 UUID' },
+          {
+            pattern: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+            message: '请输入有效的 UUID v4'
+          }
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        label="密码"
+        name="password"
+        rules={[
+          { required: true, message: '请输入密码' },
+          {
+            pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+            message: '密码必须包含大小写字母和数字，且至少8位'
+          }
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
+
       <Form.Item>
         <Button type="primary" htmlType="submit">
           {initialValues ? '更新' : '添加'}
